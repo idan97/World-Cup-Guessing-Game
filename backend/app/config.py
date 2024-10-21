@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+# app/config.py
+>>>>>>> ebbf49d5 (Initial commit for World-Cup-Guessing-Game)
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 
@@ -20,4 +24,8 @@ def user_helper(user) -> dict:
         "username": user["username"],
         "number": user["number"], 
         "mail": user["mail"]
+<<<<<<< HEAD
     }
+=======
+    }
+>>>>>>> ebbf49d5 (Initial commit for World-Cup-Guessing-Game)
