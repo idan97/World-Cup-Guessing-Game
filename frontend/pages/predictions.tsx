@@ -5,13 +5,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Button } from "@/components/ui/button";
-import KnockoutBracket from '@/components/ui/knockoutBracket'; // Updated casing
+import KnockoutBracket from '@/components/ui/knockoutBracket';
 import GroupStageMatches from '@/components/ui/GroupStageMatches';
 import GroupStandings from '@/components/ui/GroupStandings';
 import TopGoalScorer from '@/components/ui/TopGoalScorer';
-import { KnockoutMatch, Group, GroupWinners, Player, UserPrediction, Team } from '@/types'; 
+import { KnockoutMatch, Group, GroupWinners, Player, UserPrediction, Team, Prediction } from '@/types';
 import { fetchGuesses, submitPredictions } from '@/lib/api';
-
+import NavBar from "@/components/ui/NavBar";
 
 interface Guess {
   match_id: string;
@@ -22,17 +22,74 @@ interface Guess {
   userPrediction: UserPrediction;
 }
 
-// Initial Knockout Matches Data
+
+// Initial Knockout Matches Data with team1Source and team2Source
 const initialKnockoutMatchesData = {
   roundOf16: [
-    { id: '1', team1: 'Winner Group A', team2: 'Runner-up Group B', userPrediction: { team1: 0, team2: 0 } },
-    { id: '2', team1: 'Winner Group C', team2: 'Runner-up Group D', userPrediction: { team1: 0, team2: 0 } },
-    { id: '3', team1: 'Winner Group E', team2: 'Runner-up Group F', userPrediction: { team1: 0, team2: 0 } },
-    { id: '4', team1: 'Winner Group G', team2: 'Runner-up Group H', userPrediction: { team1: 0, team2: 0 } },
-    { id: '5', team1: 'Winner Group B', team2: 'Runner-up Group A', userPrediction: { team1: 0, team2: 0 } },
-    { id: '6', team1: 'Winner Group D', team2: 'Runner-up Group C', userPrediction: { team1: 0, team2: 0 } },
-    { id: '7', team1: 'Winner Group F', team2: 'Runner-up Group E', userPrediction: { team1: 0, team2: 0 } },
-    { id: '8', team1: 'Winner Group H', team2: 'Runner-up Group G', userPrediction: { team1: 0, team2: 0 } },
+    {
+      id: '1',
+      team1: 'Winner Group A',
+      team2: 'Runner-up Group B',
+      team1Source: { group: 'Group A', position: 'winner' },
+      team2Source: { group: 'Group B', position: 'runnerUp' },
+      userPrediction: { team1: 0, team2: 0 },
+    },
+    {
+      id: '2',
+      team1: 'Winner Group C',
+      team2: 'Runner-up Group D',
+      team1Source: { group: 'Group C', position: 'winner' },
+      team2Source: { group: 'Group D', position: 'runnerUp' },
+      userPrediction: { team1: 0, team2: 0 },
+    },
+    {
+      id: '3',
+      team1: 'Winner Group E',
+      team2: 'Runner-up Group F',
+      team1Source: { group: 'Group E', position: 'winner' },
+      team2Source: { group: 'Group F', position: 'runnerUp' },
+      userPrediction: { team1: 0, team2: 0 },
+    },
+    {
+      id: '4',
+      team1: 'Winner Group G',
+      team2: 'Runner-up Group H',
+      team1Source: { group: 'Group G', position: 'winner' },
+      team2Source: { group: 'Group H', position: 'runnerUp' },
+      userPrediction: { team1: 0, team2: 0 },
+    },
+    {
+      id: '5',
+      team1: 'Winner Group B',
+      team2: 'Runner-up Group A',
+      team1Source: { group: 'Group B', position: 'winner' },
+      team2Source: { group: 'Group A', position: 'runnerUp' },
+      userPrediction: { team1: 0, team2: 0 },
+    },
+    {
+      id: '6',
+      team1: 'Winner Group D',
+      team2: 'Runner-up Group C',
+      team1Source: { group: 'Group D', position: 'winner' },
+      team2Source: { group: 'Group C', position: 'runnerUp' },
+      userPrediction: { team1: 0, team2: 0 },
+    },
+    {
+      id: '7',
+      team1: 'Winner Group F',
+      team2: 'Runner-up Group E',
+      team1Source: { group: 'Group F', position: 'winner' },
+      team2Source: { group: 'Group E', position: 'runnerUp' },
+      userPrediction: { team1: 0, team2: 0 },
+    },
+    {
+      id: '8',
+      team1: 'Winner Group H',
+      team2: 'Runner-up Group G',
+      team1Source: { group: 'Group H', position: 'winner' },
+      team2Source: { group: 'Group G', position: 'runnerUp' },
+      userPrediction: { team1: 0, team2: 0 },
+    },
   ],
   quarterFinals: [
     { id: '9', team1: '', team2: '', userPrediction: { team1: 0, team2: 0 } },
@@ -75,13 +132,13 @@ const PredictionsPage = () => {
   const [matchSortCriteria, setMatchSortCriteria] = useState<'date' | 'group'>('date');
   const [loadingGuesses, setLoadingGuesses] = useState<boolean>(true);
   const [errorGuesses, setErrorGuesses] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // State for Top Goal Scorer
   const [selectedTopGoalScorer, setSelectedTopGoalScorer] = useState<Player | null>(null);
   const [loadingPlayers, setLoadingPlayers] = useState<boolean>(false);
   const [errorPlayers, setErrorPlayers] = useState<string | null>(null);
 
-  
   // Check authentication
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -96,43 +153,164 @@ const PredictionsPage = () => {
     }
   }, [router]);
 
+  // Load guesses and predictions
   useEffect(() => {
     if (!isAuthenticated || !token) return;
-  
+
     const loadGuesses = async () => {
       try {
         const data = await fetchGuesses(token);
-        setGuesses(data);
-        updateGroupStandings(data);
-      } catch (error: any) {
-        if (error.status === 401) {
-          // Token is invalid or expired
-          localStorage.removeItem('token');
-          localStorage.removeItem('username');
-          setIsAuthenticated(false);
-          router.push('/');
-        } else {
-          setErrorGuesses(error.message || 'Failed to fetch guesses.');
-          setGuesses([]);
+
+        const predictions = data.predictions;
+
+        // Separate group and knockout predictions
+        const groupStagePredictions = predictions.filter(
+          (pred: Prediction) => pred.round === 'Group'
+        );
+        const knockoutStagePredictions = predictions.filter(
+          (pred: Prediction) => pred.round !== 'Group' && pred.round !== 'TopGoalScorer'
+        );
+
+        // Set guesses directly from groupStagePredictions
+        setGuesses(groupStagePredictions);
+        updateGroupStandings(groupStagePredictions);
+
+        // Update knockout matches without overwriting team1 and team2
+        const updatedKnockoutMatches = { ...initialKnockoutMatchesData };
+
+        knockoutStagePredictions.forEach((prediction: Prediction) => {
+          const roundKey = prediction.round;
+          const matchId = prediction.match_id;
+
+          if (roundKey === 'Final') {
+            if (updatedKnockoutMatches.final.id === matchId) {
+              updatedKnockoutMatches.final = {
+                ...updatedKnockoutMatches.final,
+                userPrediction: prediction.userPrediction,
+              };
+            }
+          } else {
+            const matches = updatedKnockoutMatches[roundKey as keyof typeof updatedKnockoutMatches];
+            if (Array.isArray(matches)) {
+              const index = matches.findIndex((match) => match.id === matchId);
+              if (index !== -1) {
+                matches[index] = {
+                  ...matches[index],
+                  userPrediction: prediction.userPrediction,
+                };
+              }
+            }
+          }
+        });
+
+        setKnockoutMatches(updatedKnockoutMatches);
+
+        // Set top goal scorer
+        if (data.topGoalScorer) {
+          const player = players.find((p) => p.name === data.topGoalScorer);
+          if (player) {
+            setSelectedTopGoalScorer(player);
+          }
         }
+      } catch (error: any) {
+        console.error('Error fetching guesses:', error);
       } finally {
         setLoadingGuesses(false);
       }
     };
-  
+
     loadGuesses();
   }, [isAuthenticated, token]);
-  
 
-    // Handle submission of guesses
   const handleSubmitPredictions = async () => {
     if (!token) return;
 
+    // Validate knockout matches
+    const invalidKnockoutMatches = [];
+    Object.entries(knockoutMatches).forEach(([roundKey, matches]) => {
+      if (Array.isArray(matches)) {
+        matches.forEach((match) => {
+          if (match.team1 === '' || match.team2 === '') {
+            invalidKnockoutMatches.push(match);
+          }
+        });
+      } else {
+        const match = matches;
+        if (match.team1 === '' || match.team2 === '') {
+          invalidKnockoutMatches.push(match);
+        }
+      }
+    });
+
+    // Check if the champion is selected
+    const champion = determineWinner(knockoutMatches.final);
+
+    if (invalidKnockoutMatches.length > 0 || !champion) {
+      alert('Please complete all knockout matches before submitting your predictions.');
+      return;
+    }
     try {
-      const payload = guesses.map((guess) => ({
-        match_id: guess.match_id,
-        userPrediction: guess.userPrediction,
-      }));
+      // Combine all predictions
+      const allPredictions: {
+        username: string | null;
+        match_id: string;
+        homeTeam: string;
+        awayTeam: string;
+        date: string | null;
+        group: string | null;
+        round: string;
+        userPrediction: UserPrediction;
+      }[] = [];
+
+      // Group stage predictions
+      guesses.forEach((guess) => {
+        allPredictions.push({
+          username, // Include username if required
+          match_id: guess.match_id,
+          homeTeam: guess.homeTeam,
+          awayTeam: guess.awayTeam,
+          date: guess.date,
+          group: guess.group,
+          round: 'Group',
+          userPrediction: guess.userPrediction,
+        });
+      });
+
+      // Knockout stage predictions
+      Object.entries(knockoutMatches).forEach(([roundKey, matches]) => {
+        const roundName = roundKey; // Adjust if needed
+        if (Array.isArray(matches)) {
+          matches.forEach((match) => {
+            allPredictions.push({
+              username,
+              match_id: match.id,
+              homeTeam: match.team1,
+              awayTeam: match.team2,
+              date: null,
+              group: null,
+              round: roundName,
+              userPrediction: match.userPrediction,
+            });
+          });
+        } else {
+          const match = matches;
+          allPredictions.push({
+            username,
+            match_id: match.id,
+            homeTeam: match.team1,
+            awayTeam: match.team2,
+            date: null,
+            group: null,
+            round: 'Final',
+            userPrediction: match.userPrediction,
+          });
+        }
+      });
+
+      const payload = {
+        predictions: allPredictions,
+        topGoalScorer: selectedTopGoalScorer ? selectedTopGoalScorer.name : null,
+      };
 
       await submitPredictions(token, payload);
       console.log('Predictions submitted successfully');
@@ -174,17 +352,17 @@ const PredictionsPage = () => {
 
   const updateGroupStandings = (updatedGuesses: Guess[]) => {
     const groupMap: { [groupName: string]: { [teamName: string]: Team } } = {};
-  
+
     // Calculate points and goals for each team
     updatedGuesses.forEach((guess) => {
       const groupName = guess.group;
       if (!groupMap[groupName]) {
         groupMap[groupName] = {};
       }
-  
+
       const homeTeamName = guess.homeTeam;
       const awayTeamName = guess.awayTeam;
-  
+
       if (!groupMap[groupName][homeTeamName]) {
         groupMap[groupName][homeTeamName] = {
           name: homeTeamName,
@@ -202,20 +380,20 @@ const PredictionsPage = () => {
         };
       }
     });
-  
+
     // Update points and goals for each match
     updatedGuesses.forEach((guess) => {
       const groupName = guess.group;
       const homeTeam = groupMap[groupName][guess.homeTeam];
       const awayTeam = groupMap[groupName][guess.awayTeam];
       const prediction = guess.userPrediction;
-  
+
       if (homeTeam && awayTeam) {
         homeTeam.goalsFor += prediction.team1;
         homeTeam.goalsAgainst += prediction.team2;
         awayTeam.goalsFor += prediction.team2;
         awayTeam.goalsAgainst += prediction.team1;
-  
+
         if (prediction.team1 > prediction.team2) {
           homeTeam.points += 3;
         } else if (prediction.team1 < prediction.team2) {
@@ -226,18 +404,18 @@ const PredictionsPage = () => {
         }
       }
     });
-  
+
     // Convert groupMap to an array of groups and sort teams
     const groupsArray: Group[] = Object.keys(groupMap).map((groupName) => ({
       name: groupName,
       teams: Object.values(groupMap[groupName]),
     }));
-  
+
     groupsArray.forEach((group) => {
       group.teams.sort((a, b) => {
         const goalDiffA = a.goalsFor - a.goalsAgainst;
         const goalDiffB = b.goalsFor - b.goalsAgainst;
-  
+
         return (
           b.points - a.points ||
           goalDiffB - goalDiffA ||
@@ -246,9 +424,9 @@ const PredictionsPage = () => {
         );
       });
     });
-  
+
     setStandings(groupsArray);
-  
+
     // Determine group winners and runners-up
     const newGroupWinners: GroupWinners = {};
     groupsArray.forEach((group) => {
@@ -259,58 +437,55 @@ const PredictionsPage = () => {
         };
       }
     });
-  
+
     setGroupWinners(newGroupWinners); // This triggers the knockout matches update
   };
 
-// Update knockout matches when group winners change
-useEffect(() => {
-  if (Object.keys(groupWinners).length === 0) return; // Ensure group winners are available
+  // Update knockout matches when group winners change
+  useEffect(() => {
+    if (Object.keys(groupWinners).length === 0) return; // Ensure group winners are available
 
-  const updatedKnockoutMatches = {
-    ...knockoutMatches,
-    roundOf16: knockoutMatches.roundOf16.map((match) => {
-      let team1 = match.team1;
-      let team2 = match.team2;
+    setKnockoutMatches((prevKnockoutMatches) => {
+      const updatedRoundOf16 = prevKnockoutMatches.roundOf16.map((match) => {
+        let team1 = match.team1;
+        let team2 = match.team2;
 
-      // Adjusted regex patterns to capture the full group name
-      const winnerGroupPattern = /^Winner (Group .+)$/;
-      const runnerUpGroupPattern = /^Runner-up (Group .+)$/;
+        if (match.team1Source) {
+          const { group, position } = match.team1Source;
+          if (position === 'winner') {
+            team1 = groupWinners[group]?.winner || match.team1;
+          } else if (position === 'runnerUp') {
+            team1 = groupWinners[group]?.runnerUp || match.team1;
+          }
+        }
 
-      // Update team1 based on group winner or runner-up
-      const team1MatchWinner = team1.match(winnerGroupPattern);
-      const team1MatchRunnerUp = team1.match(runnerUpGroupPattern);
-      const team2MatchWinner = team2.match(winnerGroupPattern);
-      const team2MatchRunnerUp = team2.match(runnerUpGroupPattern);
+        if (match.team2Source) {
+          const { group, position } = match.team2Source;
+          if (position === 'winner') {
+            team2 = groupWinners[group]?.winner || match.team2;
+          } else if (position === 'runnerUp') {
+            team2 = groupWinners[group]?.runnerUp || match.team2;
+          }
+        }
 
-      if (team1MatchWinner) {
-        const groupName = team1MatchWinner[1];
-        team1 = groupWinners[groupName]?.winner || team1;
-      } else if (team1MatchRunnerUp) {
-        const groupName = team1MatchRunnerUp[1];
-        team1 = groupWinners[groupName]?.runnerUp || team1;
-      }
+        return {
+          ...match,
+          team1,
+          team2,
+        };
+      });
 
-      if (team2MatchWinner) {
-        const groupName = team2MatchWinner[1];
-        team2 = groupWinners[groupName]?.winner || team2;
-      } else if (team2MatchRunnerUp) {
-        const groupName = team2MatchRunnerUp[1];
-        team2 = groupWinners[groupName]?.runnerUp || team2;
-      }
-
-      return {
-        ...match,
-        team1,
-        team2,
+      const updatedKnockoutMatches = {
+        ...prevKnockoutMatches,
+        roundOf16: updatedRoundOf16,
       };
-    }),
-  };
 
-  setKnockoutMatches(updatedKnockoutMatches);
-}, [groupWinners]); // Ensure this runs every time groupWinners change
+      // Update the progression
+      const fullyUpdatedKnockoutMatches = updateKnockoutProgression(updatedKnockoutMatches);
 
-
+      return fullyUpdatedKnockoutMatches;
+    });
+  }, [groupWinners]);
 
   // Handle knockout score changes
   const handleKnockoutScoreChange = (
@@ -322,6 +497,8 @@ useEffect(() => {
     if (score < 0) score = 0;
 
     setKnockoutMatches((prevMatches) => {
+      let updatedMatches;
+
       if (roundKey === 'final') {
         const updatedFinal = {
           ...prevMatches.final,
@@ -331,9 +508,7 @@ useEffect(() => {
             winner: undefined, // Reset winner when score changes
           },
         };
-        const updatedMatches = { ...prevMatches, final: updatedFinal };
-        updateKnockoutProgression(updatedMatches);
-        return updatedMatches;
+        updatedMatches = { ...prevMatches, final: updatedFinal };
       } else {
         const updatedRound = (prevMatches[roundKey] as KnockoutMatch[]).map((match) =>
           match.id === matchId
@@ -347,10 +522,11 @@ useEffect(() => {
               }
             : match
         );
-        const updatedMatches = { ...prevMatches, [roundKey]: updatedRound };
-        updateKnockoutProgression(updatedMatches);
-        return updatedMatches;
+        updatedMatches = { ...prevMatches, [roundKey]: updatedRound };
       }
+
+      const fullyUpdatedMatches = updateKnockoutProgression(updatedMatches);
+      return fullyUpdatedMatches;
     });
   };
 
@@ -361,6 +537,8 @@ useEffect(() => {
     winner: 'team1' | 'team2'
   ) => {
     setKnockoutMatches((prevMatches) => {
+      let updatedMatches;
+
       if (roundKey === 'final') {
         const updatedFinal = {
           ...prevMatches.final,
@@ -369,9 +547,7 @@ useEffect(() => {
             winner,
           },
         };
-        const updatedMatches = { ...prevMatches, final: updatedFinal };
-        updateKnockoutProgression(updatedMatches);
-        return updatedMatches;
+        updatedMatches = { ...prevMatches, final: updatedFinal };
       } else {
         const updatedRound = (prevMatches[roundKey] as KnockoutMatch[]).map((match) =>
           match.id === matchId
@@ -384,10 +560,11 @@ useEffect(() => {
               }
             : match
         );
-        const updatedMatches = { ...prevMatches, [roundKey]: updatedRound };
-        updateKnockoutProgression(updatedMatches);
-        return updatedMatches;
+        updatedMatches = { ...prevMatches, [roundKey]: updatedRound };
       }
+
+      const fullyUpdatedMatches = updateKnockoutProgression(updatedMatches);
+      return fullyUpdatedMatches;
     });
   };
 
@@ -435,13 +612,13 @@ useEffect(() => {
   const updateKnockoutProgression = (updatedMatches: typeof knockoutMatches) => {
     const newMatches = { ...updatedMatches };
 
-    // Update QuarterFinals
+    // Update Quarterfinals
     Object.entries(matchMappings.quarterFinals).forEach(([qfId, [r16aId, r16bId]]) => {
       const r16a = newMatches.roundOf16.find((m) => m.id === r16aId);
       const r16b = newMatches.roundOf16.find((m) => m.id === r16bId);
 
-      const winnerA = r16a ? determineWinner(r16a) : null;
-      const winnerB = r16b ? determineWinner(r16b) : null;
+      const winnerA = r16a ? determineWinner(r16a) : '';
+      const winnerB = r16b ? determineWinner(r16b) : '';
 
       const qfMatch = newMatches.quarterFinals.find((m) => m.id === qfId);
       if (qfMatch) {
@@ -455,8 +632,8 @@ useEffect(() => {
       const qfA = newMatches.quarterFinals.find((m) => m.id === qfAId);
       const qfB = newMatches.quarterFinals.find((m) => m.id === qfBId);
 
-      const winnerA = qfA ? determineWinner(qfA) : null;
-      const winnerB = qfB ? determineWinner(qfB) : null;
+      const winnerA = qfA ? determineWinner(qfA) : '';
+      const winnerB = qfB ? determineWinner(qfB) : '';
 
       const sfMatch = newMatches.semiFinals.find((m) => m.id === sfId);
       if (sfMatch) {
@@ -470,14 +647,14 @@ useEffect(() => {
       const sfA = newMatches.semiFinals.find((m) => m.id === sfAId);
       const sfB = newMatches.semiFinals.find((m) => m.id === sfBId);
 
-      const winnerA = sfA ? determineWinner(sfA) : null;
-      const winnerB = sfB ? determineWinner(sfB) : null;
+      const winnerA = sfA ? determineWinner(sfA) : '';
+      const winnerB = sfB ? determineWinner(sfB) : '';
 
       newMatches.final.team1 = winnerA || '';
       newMatches.final.team2 = winnerB || '';
     });
 
-    setKnockoutMatches(newMatches);
+    return newMatches;
   };
 
   if (!isAuthenticated) {
@@ -485,83 +662,73 @@ useEffect(() => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-400 to-blue-500 py-12 px-4 overflow-auto flex flex-col">
-      <div className="max-w-[1400px] mx-auto w-full">  {/* Increased max width */}
-        {/* Welcome and Title */}
-        {username && (
-          <h1 className="text-3xl font-bold text-white mb-6"> {/* Larger font size */}
-            Welcome, {username}
+    <div className="min-h-screen bg-gradient-to-b from-green-400 to-blue-500 overflow-auto flex flex-col">
+      
+      {/* Main content */}
+      <div className="py-12 px-4 flex-grow">
+        <div className="max-w-[1400px] mx-auto w-full">
+          <h1 className="text-5xl font-bold text-center text-white mb-10">
+            Make Your Predictions
           </h1>
-        )}
-        <h1 className="text-5xl font-bold text-center text-white mb-10"> {/* Larger font size */}
-          Make Your Predictions
-        </h1>
-  
-        {/* Group Stage Matches and Standings */}
-        <div className="flex flex-col md:flex-row">
-          <div className="flex-1">
-            {/* Group Stage Matches */}
-            <GroupStageMatches
-              matches={guesses.map((guess) => ({
-                id: guess.match_id,
-                homeTeam: guess.homeTeam,
-                awayTeam: guess.awayTeam,
-                date: guess.date,
-                group: guess.group,
-                userPrediction: guess.userPrediction,
-              }))}
-              loading={loadingGuesses}
-              error={errorGuesses}
-              handleInputChange={handleInputChange}
-              sortCriteria={matchSortCriteria}
-              setSortCriteria={setMatchSortCriteria}
+          {/* Group Stage Matches and Standings */}
+          <div className="flex flex-col md:flex-row">
+            <div className="flex-1">
+              {/* Group Stage Matches */}
+              <GroupStageMatches
+                matches={guesses.map((guess) => ({
+                  id: guess.match_id,
+                  homeTeam: guess.homeTeam,
+                  awayTeam: guess.awayTeam,
+                  date: guess.date,
+                  group: guess.group,
+                  userPrediction: guess.userPrediction,
+                }))}
+                loading={loadingGuesses}
+                error={errorGuesses}
+                handleInputChange={handleInputChange}
+                sortCriteria={matchSortCriteria}
+                setSortCriteria={setMatchSortCriteria}
+              />
+            </div>
+            {/* Group Standings on the right */}
+            <div className="w-full md:w-1/3 ml-8 overflow-x-auto">
+              <GroupStandings
+                groups={standings}
+                loading={loadingGuesses}
+                error={errorGuesses}
+              />
+            </div>
+          </div>
+          {/* Knockout Stage Section */}
+          <div className="w-full mt-16">
+            <div className="mx-auto w-full">
+              <KnockoutBracket
+                matches={knockoutMatches}
+                onScoreChange={handleKnockoutScoreChange}
+                onWinnerSelect={handleKnockoutWinnerSelect}
+              />
+            </div>
+          </div>
+          {/* Top Goal Scorer */}
+          <div className="w-full my-12">
+            <TopGoalScorer
+              players={players}
+              selectedPlayer={selectedTopGoalScorer}
+              setSelectedPlayer={setSelectedTopGoalScorer}
             />
           </div>
-  
-          {/* Group Standings on the right */}
-          <div className="w-full md:w-1/3 ml-8 overflow-x-auto"> {/* Adjusted width */}
-            <GroupStandings
-              groups={standings}
-              loading={loadingGuesses}
-              error={errorGuesses}
-            />
+          {/* Submit Button */}
+          <div className="text-center mt-12">
+            <Button
+              onClick={handleSubmitPredictions}
+              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-lg text-white">
+              Submit All Predictions
+            </Button>
           </div>
-        </div>
-  
-        {/* Knockout Stage Section (with increased size and respect) */}
-        <div className="w-full mt-16">  {/* Larger margin for spacing */}
-          <div className="mx-auto w-full">  {/* Increase width of KnockoutBracket */}
-            <KnockoutBracket
-              matches={knockoutMatches}
-              onScoreChange={handleKnockoutScoreChange}
-              onWinnerSelect={handleKnockoutWinnerSelect}
-            />
-          </div>
-        </div>
-  
-        {/* Top Goal Scorer */}
-        <div className="w-full my-12">
-          <TopGoalScorer
-            players={players}
-            selectedPlayer={selectedTopGoalScorer}
-            setSelectedPlayer={setSelectedTopGoalScorer}
-          />
-        </div>
-  
-        {/* Submit Button */}
-        <div className="text-center mt-12">
-          <Button
-            onClick={handleSubmitPredictions}
-            className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-lg">
-            Submit All Predictions
-          </Button>
         </div>
       </div>
     </div>
   );
-  
-}
-  
+};
 
 export default PredictionsPage;
-

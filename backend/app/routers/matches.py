@@ -29,7 +29,7 @@ async def fetch_and_store_matches():
                 "homeTeam": match["homeTeam"]["name"],
                 "awayTeam": match["awayTeam"]["name"],
                 "date": match["utcDate"],
-                "score": match["score"],
+                "result": None,
                 # Initialize group as 'Unknown' or based on your logic
                 "group": "Unknown",
             }
@@ -38,7 +38,6 @@ async def fetch_and_store_matches():
         first_run = False  # Update the flag after fetching
 
 async def fetch_and_store_groups():
-    print("Fetching group data from API")
     url = "https://api.football-data.org/v4/competitions/WC/standings"
     headers = {"X-Auth-Token": "9d283d4b86cd4442833e84048aa60acd"}  
     
@@ -62,7 +61,7 @@ async def fetch_and_store_groups():
 
     for standing in standings:
         group_name = standing.get("group")
-        if not group_name:
+        if not group_name or group_name == 'Knockout Stage':
             continue  # Skip if group name is missing
         for team in standing.get("table", []):
             team_name = team["team"]["name"]
@@ -100,16 +99,13 @@ async def fetch_and_store_groups():
             if home_group and away_group and home_group == away_group:
                 # Both teams are in the same group
                 group_to_assign = home_group
-                print(f"Match {match_id} between '{home_team}' and '{away_team}' assigned to group '{group_to_assign}'.")
             else:
                 # Teams are in different groups or group information is missing
                 group_to_assign = "Knockout Stage"
                 knockout_started = True  # Set the flag as knockout stage has begun
-                print(f"Match {match_id} between '{home_team}' and '{away_team}' assigned to '{group_to_assign}'.")
         else:
             # All subsequent matches are part of the Knockout Stage
             group_to_assign = "Knockout Stage"
-            print(f"Match {match_id} between '{home_team}' and '{away_team}' assigned to '{group_to_assign}' (Knockout Stage).")
 
         # Check if the current group is different from the group to assign
         current_group = match.get("group", "Unknown")
@@ -120,7 +116,6 @@ async def fetch_and_store_groups():
                     {"$set": {"group": group_to_assign}}
                 )
             )
-            print(f"Prepared update for match {match_id} with group '{group_to_assign}'.")
 
     if bulk_operations:
         result = await matches_collection.bulk_write(bulk_operations)

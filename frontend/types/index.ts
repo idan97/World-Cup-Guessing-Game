@@ -45,3 +45,9 @@ export interface KnockoutMatch {
     id: string;
     name: string;
   }
+
+export interface Prediction {
+  match_id: string;
+  round: string;
+  userPrediction: UserPrediction;
+}

@@ -26,9 +26,27 @@ export const fetchGuesses = async (token: string) => {
   return response.data;
 };
 
-export const submitPredictions = async (token: string, predictions: any[]) => {
-  const response = await axios.post(`${API_URL}/guesses/`, predictions, {
-    headers: { Authorization: `Bearer ${token}` },
+// lib/api.ts
+
+export const submitPredictions = async (token: string, payload: any) => {
+  const response = await fetch(`${API_URL}/guesses/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
   });
-  return response.data;
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    const error = new Error(errorData.message || 'Failed to submit predictions.');
+    // @ts-ignore
+    error.status = response.status;
+    throw error;
+  }
+
+  const data = await response.json();
+  return data;
 };
+

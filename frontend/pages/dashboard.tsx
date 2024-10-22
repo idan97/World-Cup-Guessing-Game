@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Clock, Trophy, LogOut, MessageCircle } from 'lucide-react';
+import { Clock, Trophy, MessageCircle } from 'lucide-react';
 
 interface TopPlayer {
   rank: number;
@@ -88,14 +88,6 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-400 to-blue-500 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-white">
-            Welcome, {currentUser.name}!
-          </h1>
-          <Button variant="outline" className="bg-white">
-            <LogOut className="mr-2 h-4 w-4" /> Logout
-          </Button>
-        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card className="bg-white rounded-lg shadow-lg p-4">

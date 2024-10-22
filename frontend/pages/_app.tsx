@@ -1,10 +1,30 @@
-// frontend/pages/_app.tsx
-import '../styles/globals.css'; // Correct relative path
+import { useState, useEffect } from 'react';
 import type { AppProps } from 'next/app';
-import React from 'react';
+import Layout from '@/components/ui/Layout';
+import '@/styles/globals.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />;
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    setUsername(storedUsername);
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'username') {
+        setUsername(event.newValue);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  return (
+    <Layout username={username}>
+      <Component {...pageProps} />
+    </Layout>
+  );
 }
 
 export default MyApp;

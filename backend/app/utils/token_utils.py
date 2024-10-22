@@ -49,7 +49,6 @@ def decode_access_token(token: str):
 
 # Utility to extract username from token
 async def get_current_user(token: str = Depends(oauth2_scheme)):
-    print(token)
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
