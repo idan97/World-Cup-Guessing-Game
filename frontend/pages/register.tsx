@@ -21,20 +21,27 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
-
+  
     if (password !== confirmPassword) {
       setErrorMessage('Passwords do not match.');
       return;
     }
-
+  
     try {
       await registerUser({ username, email, colboNumber, password });
       router.push('/');
     } catch (error: any) {
       console.error("Registration error:", error.response?.data || error.message);
-      setErrorMessage('Registration failed. Please try again.');
+  
+      // Check for specific error message if the username is taken
+      if (error.response?.data?.detail === "Username already taken") {
+        setErrorMessage('This username is already taken. Please choose a different one.');
+      } else {
+        setErrorMessage('Registration failed. Please try again.');
+      }
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -65,7 +72,7 @@ export default function RegisterPage() {
                   id="username"
                   name="username"
                   type="text"
-                  autoComplete="username"
+                  autoComplete="new-username"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}

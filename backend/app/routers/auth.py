@@ -98,6 +98,7 @@ async def register_user(user_data: UserCreateSchema):
     # Create the new user
     user_dict = user_data.dict()
     user_dict["password"] = hashed_password
+    user_dict['role'] = "user"
 
     new_user = await add_user(user_dict)
 
@@ -109,23 +110,26 @@ async def register_user(user_data: UserCreateSchema):
 
 @router.post("/login/")
 async def login_user(user_credentials: UserLoginSchema):
-    # Use the username instead of email
     user = await get_user_by_username_and_password(user_credentials.username, user_credentials.password)
     if not user:
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    # Generate a JWT token
     access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(
         data={"sub": user['username']}, expires_delta=access_token_expires
     )
 
-    # Return the token and user info
-    return {
+    user_to_return = {
         "access_token": access_token,
         "token_type": "bearer",
-        "username": user['username']
+        "username": user['username'],
+        "role": user['role']  # Return the user's role
     }
+
+    print(user_to_return )
+
+    # Include role in the response
+    return user_to_return
 
 
 async def get_current_manager_user(token: str = Depends(oauth2_scheme)):

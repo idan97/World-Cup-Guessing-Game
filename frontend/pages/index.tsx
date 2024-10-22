@@ -23,18 +23,25 @@ export default function LoginPage() {
 
     try {
       const response = await axios.post('http://127.0.0.1:8000/auth/login/', {
-        username: username,
-        password: password,
+        username,
+        password,
       });
 
       if (response.status !== 200) {
         throw new Error('Login failed');
       }
 
-      localStorage.setItem('token', response.data.access_token);
-      localStorage.setItem('username', response.data.username);
+      const { access_token, username: returnedUsername, role } = response.data;
 
-      router.push('/predictions');
+      // Store token, username, and role
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('username', returnedUsername);
+      localStorage.setItem('role', role);  // Store user role in localStorage
+
+      // Redirect based on role
+      router.push('/dashboard'); 
+
+
     } catch (error: any) {
       console.error("Login error:", error.response?.data || error.message);
       setErrorMessage('Login failed. Please check your credentials and try again.');
@@ -72,7 +79,7 @@ export default function LoginPage() {
                   id="username"
                   name="username"
                   type="text"
-                  autoComplete="username"
+                  autoComplete="new-username"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}

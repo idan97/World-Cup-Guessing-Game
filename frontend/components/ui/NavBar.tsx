@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, Home, TrendingUp, Trophy } from 'lucide-react';
+import { LogOut, Menu, Home, TrendingUp, Trophy, Edit, ClipboardList } from 'lucide-react';
 
 interface NavBarProps {
   username: string | null;
@@ -10,11 +10,21 @@ interface NavBarProps {
 
 export default function NavBar({ username }: NavBarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isManager, setIsManager] = useState(false); // State to track if user is a manager
   const router = useRouter();
+
+  useEffect(() => {
+    const role = localStorage.getItem('role'); // Assuming role is stored as 'manager' for managers
+    if (role === 'manager') {
+      setIsManager(true);
+    }
+  }, []); // Run this check once on component mount
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
+    localStorage.removeItem('role'); // Remove the role when logging out
+    window.dispatchEvent(new Event('storage'));
     router.push('/');
   };
 
@@ -40,6 +50,17 @@ export default function NavBar({ username }: NavBarProps) {
             <Link href="/leaderboard" className="text-gray-700 hover:text-gray-900 flex items-center">
               <Trophy className="mr-1 h-4 w-4" /> Leaderboard
             </Link>
+            {/* Show manager links if user is a manager */}
+            {isManager && (
+              <>
+                <Link href="/manager/update-results" className="text-gray-700 hover:text-gray-900 flex items-center">
+                  <Edit className="mr-1 h-4 w-4" /> Update Results
+                </Link>
+                <Link href="/manager/write-summary" className="text-gray-700 hover:text-gray-900 flex items-center">
+                  <ClipboardList className="mr-1 h-4 w-4" /> Write Summary
+                </Link>
+              </>
+            )}
             <Button onClick={handleLogout} variant="outline" className="text-gray-700 border-gray-300 hover:bg-gray-200 hover:text-gray-900">
               <LogOut className="mr-2 h-4 w-4" /> Logout
             </Button>
@@ -64,6 +85,17 @@ export default function NavBar({ username }: NavBarProps) {
             <Link href="/leaderboard" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-200 hover:text-gray-900">
               <Trophy className="inline-block mr-2 h-4 w-4" /> Leaderboard
             </Link>
+            {/* Show manager links in mobile menu as well */}
+            {isManager && (
+              <>
+                <Link href="/manager/update-results" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-200 hover:text-gray-900">
+                  <Edit className="inline-block mr-2 h-4 w-4" /> Update Results
+                </Link>
+                <Link href="/manager/write-summary" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-200 hover:text-gray-900">
+                  <ClipboardList className="inline-block mr-2 h-4 w-4" /> Write Summary
+                </Link>
+              </>
+            )}
             <Button onClick={handleLogout} variant="outline" className="w-full text-gray-700 border-gray-300 hover:bg-gray-200 hover:text-gray-900 mt-2">
               <LogOut className="mr-2 h-4 w-4" /> Logout
             </Button>
