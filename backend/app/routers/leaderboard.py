@@ -1,8 +1,9 @@
 # app/routes/leaderboard.py
 
 from fastapi import APIRouter, HTTPException, Depends
+from pymongo import UpdateOne
 from app.config import predictions_collection, users_collection, matches_collection
-from app.auth import get_current_manager_user  # Ensure only manager can trigger updates
+from app.routers.auth import get_current_manager_user  # Assume you have an auth module
 
 router = APIRouter()
 

@@ -2,8 +2,9 @@
 
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, Body
+from pymongo import UpdateOne
 from app.config import matches_collection, results_collection, daily_summaries_collection
-from app.auth import get_current_manager_user  # Assume you have an auth module
+from app.routers.auth import get_current_manager_user  # Assume you have an auth module
 
 router = APIRouter()
 
