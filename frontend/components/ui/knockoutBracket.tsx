@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { Trophy } from 'lucide-react';
+ 
 
 interface UserPrediction {
   team1: number;
@@ -46,16 +47,21 @@ const MatchBox: React.FC<{
   const isTie = match.userPrediction.team1 === match.userPrediction.team2;
 
   return (
-    <div className="bg-gray-700 p-2 rounded-md text-white text-xs w-32">
-      <div className="flex justify-between items-center mb-1">
-        <span className="truncate flex-grow mr-1 text-[10px]">{match.team1 || 'TBD'}</span>
+    <div className="bg-gray-700 p-4 rounded-md text-white text-sm w-48">
+      <div className="flex justify-between items-center mb-2">
+        <span
+          className={`truncate flex-grow mr-2 ${!match.team1 ? 'text-gray-400 italic' : ''}`}
+        >
+          {match.team1 || '-'}
+        </span>
         <input
           type="number"
-          className="w-6 h-6 bg-gray-800 text-white rounded p-0 text-[10px]"
+          className="w-8 h-8 bg-gray-800 text-white rounded p-1 text-sm"
           value={match.userPrediction.team1}
           onChange={(e) => onScoreChange('team1', Number(e.target.value))}
           min={0}
-          aria-label={`Score for ${match.team1 || 'TBD'}`}
+          aria-label={`Score for ${match.team1 || 'No Team'}`}
+          disabled={!match.team1} // Disable input if no team
         />
         {isTie && match.team1 && match.team2 && (
           <input
@@ -63,20 +69,26 @@ const MatchBox: React.FC<{
             name={`winner-${match.id}`}
             checked={match.userPrediction.winner === 'team1'}
             onChange={() => onWinnerSelect('team1')}
-            className="ml-1 w-3 h-3"
-            aria-label={`Select ${match.team1 || 'TBD'} as winner`}
+            className="ml-2 w-4 h-4"
+            aria-label={`Select ${match.team1 || 'No Team'} as winner`}
+            disabled={!match.team1} // Disable radio if no team
           />
         )}
       </div>
       <div className="flex justify-between items-center">
-        <span className="truncate flex-grow mr-1 text-[10px]">{match.team2 || 'TBD'}</span>
+        <span
+          className={`truncate flex-grow mr-2 ${!match.team2 ? 'text-gray-400 italic' : ''}`}
+        >
+          {match.team2 || '-'}
+        </span>
         <input
           type="number"
-          className="w-6 h-6 bg-gray-800 text-white rounded p-0 text-[10px]"
+          className="w-8 h-8 bg-gray-800 text-white rounded p-1 text-sm"
           value={match.userPrediction.team2}
           onChange={(e) => onScoreChange('team2', Number(e.target.value))}
           min={0}
-          aria-label={`Score for ${match.team2 || 'TBD'}`}
+          aria-label={`Score for ${match.team2 || 'No Team'}`}
+          disabled={!match.team2} // Disable input if no team
         />
         {isTie && match.team1 && match.team2 && (
           <input
@@ -84,19 +96,19 @@ const MatchBox: React.FC<{
             name={`winner-${match.id}`}
             checked={match.userPrediction.winner === 'team2'}
             onChange={() => onWinnerSelect('team2')}
-            className="ml-1 w-3 h-3"
-            aria-label={`Select ${match.team2 || 'TBD'} as winner`}
+            className="ml-2 w-4 h-4"
+            aria-label={`Select ${match.team2 || 'No Team'} as winner`}
+            disabled={!match.team2} // Disable radio if no team
           />
         )}
       </div>
-      {isTie && match.team1 && match.team2 && (
-        <div className="mt-1 text-[8px] text-yellow-400">
-          Tie! Select winner
-        </div>
-      )}
+      {/* The message has been removed */}
     </div>
   );
 };
+
+
+
 
 const KnockoutBracket: React.FC<KnockoutBracketProps> = ({ matches, onScoreChange, onWinnerSelect }) => {
   // Determine the champion based on the final match's winner
@@ -110,7 +122,7 @@ const KnockoutBracket: React.FC<KnockoutBracketProps> = ({ matches, onScoreChang
       ? finalMatch.team1
       : finalMatch.userPrediction.winner === 'team2'
       ? finalMatch.team2
-      : 'TBD';
+      : '-';
 
   return (
     <div className="w-full bg-gray-800 p-4 rounded-lg overflow-x-auto">
@@ -119,13 +131,13 @@ const KnockoutBracket: React.FC<KnockoutBracketProps> = ({ matches, onScoreChang
         <div className="grid grid-cols-7 gap-4">
           {/* Headers */}
           <div className="col-span-7 grid grid-cols-7 gap-4 mb-4">
-            <h3 className="text-center text-white font-semibold col-span-1 text-xs">Round of 16</h3>
-            <h3 className="text-center text-white font-semibold col-span-1 text-xs">Quarterfinals</h3>
-            <h3 className="text-center text-white font-semibold col-span-1 text-xs">Semifinals</h3>
-            <h3 className="text-center text-white font-semibold col-span-1 text-xs">Final</h3>
-            <h3 className="text-center text-white font-semibold col-span-1 text-xs">Semifinals</h3>
-            <h3 className="text-center text-white font-semibold col-span-1 text-xs">Quarterfinals</h3>
-            <h3 className="text-center text-white font-semibold col-span-1 text-xs">Round of 16</h3>
+            <h3 className="text-center text-white font-semibold col-span-1 text-s">Round of 16</h3>
+            <h3 className="text-center text-white font-semibold col-span-1 text-s">Quarterfinals</h3>
+            <h3 className="text-center text-white font-semibold col-span-1 text-s">Semifinals</h3>
+            <h3 className="text-center text-white font-semibold col-span-1 text-s">Final</h3>
+            <h3 className="text-center text-white font-semibold col-span-1 text-s">Semifinals</h3>
+            <h3 className="text-center text-white font-semibold col-span-1 text-s">Quarterfinals</h3>
+            <h3 className="text-center text-white font-semibold col-span-1 text-s">Round of 16</h3>
           </div>
 
           {/* Round of 16 - Left */}
@@ -142,7 +154,7 @@ const KnockoutBracket: React.FC<KnockoutBracketProps> = ({ matches, onScoreChang
           </div>
 
           {/* Quarterfinals - Left */}
-          <div className="col-span-1 space-y-4 mt-4">
+          <div className="col-span-1 space-y-28 mt-16">
             {matches.quarterFinals.slice(0, 2).map((match) => (
               <div key={match.id}>
                 <MatchBox
@@ -155,7 +167,7 @@ const KnockoutBracket: React.FC<KnockoutBracketProps> = ({ matches, onScoreChang
           </div>
 
           {/* Semifinals - Left */}
-          <div className="col-span-1 space-y-8 mt-8">
+          <div className="col-span-1 space-y-8 mt-44">
             {matches.semiFinals.slice(0, 1).map((match) => (
               <div key={match.id}>
                 <MatchBox
@@ -169,21 +181,23 @@ const KnockoutBracket: React.FC<KnockoutBracketProps> = ({ matches, onScoreChang
 
           {/* Final */}
           <div className="col-span-1 flex flex-col items-center justify-center">
-            <div className="relative mt-12">
+            <div className="relative mt-80">
               <MatchBox
                 match={matches.final}
                 onScoreChange={(team, score) => onScoreChange('final', matches.final.id, team, score)}
                 onWinnerSelect={(winner) => onWinnerSelect('final', matches.final.id, winner)}
               />
             </div>
-            <Trophy className="text-yellow-400 mt-4" size={24} />
-            <div className="bg-yellow-600 p-1 rounded-md text-white text-[10px] mt-2 text-center font-bold">
-              Champion: {champion}
+            <Trophy className="text-yellow-400 mt-4" size={30} />
+            <div className="bg-yellow-600 p-4 rounded-md text-white text-l mt-4 text-center font-bold shadow-lg">
+              {champion}
             </div>
+
+
           </div>
 
           {/* Semifinals - Right */}
-          <div className="col-span-1 space-y-8 mt-8">
+          <div className="col-span-1 space-y-1 mt-44">
             {matches.semiFinals.slice(1, 2).map((match) => (
               <div key={match.id}>
                 <MatchBox
@@ -196,7 +210,7 @@ const KnockoutBracket: React.FC<KnockoutBracketProps> = ({ matches, onScoreChang
           </div>
 
           {/* Quarterfinals - Right */}
-          <div className="col-span-1 space-y-4 mt-4">
+          <div className="col-span-1 space-y-28 mt-16">
             {matches.quarterFinals.slice(2, 4).map((match) => (
               <div key={match.id}>
                 <MatchBox

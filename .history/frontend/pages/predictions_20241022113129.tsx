@@ -9,18 +9,9 @@ import KnockoutBracket from '@/components/ui/knockoutBracket'; // Updated casing
 import GroupStageMatches from '@/components/ui/GroupStageMatches';
 import GroupStandings from '@/components/ui/GroupStandings';
 import TopGoalScorer from '@/components/ui/TopGoalScorer';
-import { KnockoutMatch, Group, GroupWinners, Player, UserPrediction, Team } from '@/types'; 
+import { Guess, KnockoutMatch, Group, GroupWinners, Player } from '@/types'; 
 import { fetchGuesses, submitPredictions } from '@/lib/api';
 
-
-interface Guess {
-  match_id: string;
-  homeTeam: string;
-  awayTeam: string;
-  date: string;
-  group: string;
-  userPrediction: UserPrediction;
-}
 
 // Initial Knockout Matches Data
 const initialKnockoutMatchesData = {
@@ -96,33 +87,25 @@ const PredictionsPage = () => {
     }
   }, [router]);
 
+  // Fetch user guesses from the backend
   useEffect(() => {
     if (!isAuthenticated || !token) return;
-  
+
     const loadGuesses = async () => {
       try {
         const data = await fetchGuesses(token);
         setGuesses(data);
-        updateGroupStandings(data);
+        setStandings(data);
       } catch (error: any) {
-        if (error.status === 401) {
-          // Token is invalid or expired
-          localStorage.removeItem('token');
-          localStorage.removeItem('username');
-          setIsAuthenticated(false);
-          router.push('/');
-        } else {
-          setErrorGuesses(error.message || 'Failed to fetch guesses.');
-          setGuesses([]);
-        }
+        setErrorGuesses(error.message || 'Failed to fetch guesses.');
+        setGuesses([]);
       } finally {
         setLoadingGuesses(false);
       }
     };
-  
+
     loadGuesses();
   }, [isAuthenticated, token]);
-  
 
     // Handle submission of guesses
   const handleSubmitPredictions = async () => {
@@ -172,98 +155,7 @@ const PredictionsPage = () => {
     updateGroupStandings(updatedGuesses);
   };
 
-  const updateGroupStandings = (updatedGuesses: Guess[]) => {
-    const groupMap: { [groupName: string]: { [teamName: string]: Team } } = {};
-  
-    // Calculate points and goals for each team
-    updatedGuesses.forEach((guess) => {
-      const groupName = guess.group;
-      if (!groupMap[groupName]) {
-        groupMap[groupName] = {};
-      }
-  
-      const homeTeamName = guess.homeTeam;
-      const awayTeamName = guess.awayTeam;
-  
-      if (!groupMap[groupName][homeTeamName]) {
-        groupMap[groupName][homeTeamName] = {
-          name: homeTeamName,
-          points: 0,
-          goalsFor: 0,
-          goalsAgainst: 0,
-        };
-      }
-      if (!groupMap[groupName][awayTeamName]) {
-        groupMap[groupName][awayTeamName] = {
-          name: awayTeamName,
-          points: 0,
-          goalsFor: 0,
-          goalsAgainst: 0,
-        };
-      }
-    });
-  
-    // Update points and goals for each match
-    updatedGuesses.forEach((guess) => {
-      const groupName = guess.group;
-      const homeTeam = groupMap[groupName][guess.homeTeam];
-      const awayTeam = groupMap[groupName][guess.awayTeam];
-      const prediction = guess.userPrediction;
-  
-      if (homeTeam && awayTeam) {
-        homeTeam.goalsFor += prediction.team1;
-        homeTeam.goalsAgainst += prediction.team2;
-        awayTeam.goalsFor += prediction.team2;
-        awayTeam.goalsAgainst += prediction.team1;
-  
-        if (prediction.team1 > prediction.team2) {
-          homeTeam.points += 3;
-        } else if (prediction.team1 < prediction.team2) {
-          awayTeam.points += 3;
-        } else {
-          homeTeam.points += 1;
-          awayTeam.points += 1;
-        }
-      }
-    });
-  
-    // Convert groupMap to an array of groups and sort teams
-    const groupsArray: Group[] = Object.keys(groupMap).map((groupName) => ({
-      name: groupName,
-      teams: Object.values(groupMap[groupName]),
-    }));
-  
-    groupsArray.forEach((group) => {
-      group.teams.sort((a, b) => {
-        const goalDiffA = a.goalsFor - a.goalsAgainst;
-        const goalDiffB = b.goalsFor - b.goalsAgainst;
-  
-        return (
-          b.points - a.points ||
-          goalDiffB - goalDiffA ||
-          b.goalsFor - a.goalsFor ||
-          a.name.localeCompare(b.name)
-        );
-      });
-    });
-  
-    setStandings(groupsArray);
-  
-    // Determine group winners and runners-up
-    const newGroupWinners: GroupWinners = {};
-    groupsArray.forEach((group) => {
-      if (group.teams.length >= 2) {
-        newGroupWinners[group.name] = {
-          winner: group.teams[0].name,
-          runnerUp: group.teams[1].name,
-        };
-      }
-    });
-  
-    setGroupWinners(newGroupWinners); // This triggers the knockout matches update
-  };
-
-// Update knockout matches when group winners change
+  // Update knockout matches when group winners change
 useEffect(() => {
   if (Object.keys(groupWinners).length === 0) return; // Ensure group winners are available
 
@@ -273,9 +165,9 @@ useEffect(() => {
       let team1 = match.team1;
       let team2 = match.team2;
 
-      // Adjusted regex patterns to capture the full group name
-      const winnerGroupPattern = /^Winner (Group .+)$/;
-      const runnerUpGroupPattern = /^Runner-up (Group .+)$/;
+      // Patterns to match "Winner" or "Runner-up" placeholders
+      const winnerGroupPattern = /^Winner Group (.+)$/;
+      const runnerUpGroupPattern = /^Runner-up Group (.+)$/;
 
       // Update team1 based on group winner or runner-up
       const team1MatchWinner = team1.match(winnerGroupPattern);
@@ -308,8 +200,7 @@ useEffect(() => {
   };
 
   setKnockoutMatches(updatedKnockoutMatches);
-}, [groupWinners]); // Ensure this runs every time groupWinners change
-
+}, [groupWinners, knockoutMatches]); // Ensure this runs every time groupWinners change
 
 
   // Handle knockout score changes
@@ -530,7 +421,7 @@ useEffect(() => {
   
         {/* Knockout Stage Section (with increased size and respect) */}
         <div className="w-full mt-16">  {/* Larger margin for spacing */}
-          <div className="mx-auto w-full">  {/* Increase width of KnockoutBracket */}
+          <div className="mx-auto max-w-[90%] md:max-w-[1000px]">  {/* Increase width of KnockoutBracket */}
             <KnockoutBracket
               matches={knockoutMatches}
               onScoreChange={handleKnockoutScoreChange}
@@ -564,4 +455,3 @@ useEffect(() => {
   
 
 export default PredictionsPage;
-

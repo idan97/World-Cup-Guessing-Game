@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from "@/components/ui/label";
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import axios from 'axios';
 import { User, Mail, Hash, Lock, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { registerUser } from '@/lib/api';
 
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
@@ -17,6 +17,16 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
+
+  const registerUser = async (userData: { username: string; email: string; colboNumber: string; password: string; }) => {
+    const response = await axios.post('http://127.0.0.1:8000/auth/register/', {
+      username: userData.username,
+      email: userData.email,
+      number: Number(userData.colboNumber),
+      password: userData.password,
+    });
+    return response.data;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
