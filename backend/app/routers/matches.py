@@ -3,8 +3,8 @@
 from fastapi import APIRouter, HTTPException
 import requests
 from app.config import matches_collection, groups_collection
-import httpx  # Add this import to use httpx
-from pymongo import UpdateOne  # Import UpdateOne to resolve the error
+import httpx  
+from pymongo import UpdateOne  
 
 router = APIRouter()
 first_run = True  # Initialize as True

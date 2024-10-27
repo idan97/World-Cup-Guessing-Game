@@ -1,25 +1,4 @@
 {
-<<<<<<< HEAD
-    "$schema": "https://ui.shadcn.com/schema.json",
-    "style": "new-york",
-    "rsc": false,
-    "tsx": true,
-    "tailwind": {
-      "config": "tailwind.config.js",
-      "css": "styles/globals.css",
-      "baseColor": "neutral",
-      "cssVariables": true,
-      "prefix": ""
-    },
-    "aliases": {
-      "components": "@/components",
-      "utils": "@/lib/utils",
-      "ui": "@/components/ui",
-      "lib": "@/lib",
-      "hooks": "@/hooks"
-    }
-  }
-=======
   "$schema": "https://ui.shadcn.com/schema.json",
   "style": "new-york",
   "rsc": false,
@@ -39,4 +18,3 @@
     "hooks": "@/hooks"
   }
 }
->>>>>>> ebbf49d5 (Initial commit for World-Cup-Guessing-Game)

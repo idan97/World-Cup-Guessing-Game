@@ -9,18 +9,9 @@ import KnockoutBracket from '@/components/ui/knockoutBracket';
 import GroupStageMatches from '@/components/ui/GroupStageMatches';
 import GroupStandings from '@/components/ui/GroupStandings';
 import TopGoalScorer from '@/components/ui/TopGoalScorer';
-import { KnockoutMatch, Group, GroupWinners, Player, UserPrediction, Team, Prediction } from '@/types';
+import { KnockoutMatch, Group, GroupWinners, Player, UserPrediction, Team, Prediction ,Guess } from '@/types';
 import { fetchGuesses, submitPredictions } from '@/lib/api';
 import NavBar from "@/components/ui/NavBar";
-
-interface Guess {
-  match_id: string;
-  homeTeam: string;
-  awayTeam: string;
-  date: string;
-  group: string;
-  userPrediction: UserPrediction;
-}
 
 
 // Initial Knockout Matches Data with team1Source and team2Source
@@ -186,7 +177,10 @@ const PredictionsPage = () => {
             if (updatedKnockoutMatches.final.id === matchId) {
               updatedKnockoutMatches.final = {
                 ...updatedKnockoutMatches.final,
-                userPrediction: prediction.userPrediction,
+                userPrediction: {
+                  team1: prediction.userPrediction.team1 ?? 0,
+                  team2: prediction.userPrediction.team2 ?? 0,
+                },
               };
             }
           } else {
@@ -196,7 +190,10 @@ const PredictionsPage = () => {
               if (index !== -1) {
                 matches[index] = {
                   ...matches[index],
-                  userPrediction: prediction.userPrediction,
+                  userPrediction: {
+                    team1: prediction.userPrediction.team1 ?? 0,
+                    team2: prediction.userPrediction.team2 ?? 0,
+                  },
                 };
               }
             }
@@ -225,30 +222,6 @@ const PredictionsPage = () => {
   const handleSubmitPredictions = async () => {
     if (!token) return;
 
-    // Validate knockout matches
-    const invalidKnockoutMatches = [];
-    Object.entries(knockoutMatches).forEach(([roundKey, matches]) => {
-      if (Array.isArray(matches)) {
-        matches.forEach((match) => {
-          if (match.team1 === '' || match.team2 === '') {
-            invalidKnockoutMatches.push(match);
-          }
-        });
-      } else {
-        const match = matches;
-        if (match.team1 === '' || match.team2 === '') {
-          invalidKnockoutMatches.push(match);
-        }
-      }
-    });
-
-    // Check if the champion is selected
-    const champion = determineWinner(knockoutMatches.final);
-
-    if (invalidKnockoutMatches.length > 0 || !champion) {
-      alert('Please complete all knockout matches before submitting your predictions.');
-      return;
-    }
     try {
       // Combine all predictions
       const allPredictions: {
@@ -327,13 +300,16 @@ const PredictionsPage = () => {
   ) => {
     let value = e.target.value.replace(/^0+/, '');
     if (value === '') value = '0';
-    handlePredictionChange(matchId, team, Number(value));
+    handlePredictionChange(matchId, team, value === '' ? null : Number(value));
   };
 
-  // Handle changes in user guesses
-  const handlePredictionChange = (matchId: string, team: 'team1' | 'team2', score: number) => {
-    if (score < 0) score = 0;
-
+  const handlePredictionChange = (
+    matchId: string,
+    team: 'team1' | 'team2',
+    score: number | null
+  ) => {
+    if (score !== null && score < 0) score = 0;
+  
     const updatedGuesses = guesses.map((guess) =>
       guess.match_id === matchId
         ? {
@@ -345,10 +321,11 @@ const PredictionsPage = () => {
           }
         : guess
     );
-
+  
     setGuesses(updatedGuesses);
     updateGroupStandings(updatedGuesses);
   };
+  
 
   const updateGroupStandings = (updatedGuesses: Guess[]) => {
     const groupMap: { [groupName: string]: { [teamName: string]: Team } } = {};
@@ -388,12 +365,12 @@ const PredictionsPage = () => {
       const awayTeam = groupMap[groupName][guess.awayTeam];
       const prediction = guess.userPrediction;
 
-      if (homeTeam && awayTeam) {
+      if (homeTeam && awayTeam && prediction.team1 !== null && prediction.team2 !== null) {
         homeTeam.goalsFor += prediction.team1;
         homeTeam.goalsAgainst += prediction.team2;
         awayTeam.goalsFor += prediction.team2;
         awayTeam.goalsAgainst += prediction.team1;
-
+      
         if (prediction.team1 > prediction.team2) {
           homeTeam.points += 3;
         } else if (prediction.team1 < prediction.team2) {
@@ -403,6 +380,7 @@ const PredictionsPage = () => {
           awayTeam.points += 1;
         }
       }
+      
     });
 
     // Convert groupMap to an array of groups and sort teams
@@ -681,7 +659,10 @@ const PredictionsPage = () => {
                   awayTeam: guess.awayTeam,
                   date: guess.date,
                   group: guess.group,
-                  userPrediction: guess.userPrediction,
+                  userPrediction: {
+                    team1: guess.userPrediction.team1 ?? 0, // Default to 0 if null
+                    team2: guess.userPrediction.team2 ?? 0, // Default to 0 if null
+                  },
                 }))}
                 loading={loadingGuesses}
                 error={errorGuesses}

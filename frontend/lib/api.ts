@@ -26,7 +26,6 @@ export const fetchGuesses = async (token: string) => {
   return response.data;
 };
 
-// lib/api.ts
 
 export const submitPredictions = async (token: string, payload: any) => {
   const response = await fetch(`${API_URL}/guesses/`, {

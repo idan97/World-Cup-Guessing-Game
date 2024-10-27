@@ -13,6 +13,7 @@ users_collection = database.get_collection("users")  # Collection name: 'users'
 matches_collection = database.get_collection("matches")  # Collection name: 'matches'
 groups_collection = database.get_collection("groups")  # Collection name: 'groups'
 guesses_collection = database.get_collection("guesses")  # Collection name: 'guesses'
+daily_summaries_collection = database.get_collection("daily_summaries")
 
 # Helper function to convert MongoDB document to a dictionary
 def user_helper(user) -> dict:

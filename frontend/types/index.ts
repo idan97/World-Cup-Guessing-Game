@@ -1,19 +1,11 @@
 //types/index.ts
 export interface UserPrediction {
-    team1: number;
-    team2: number;
-    winner?: 'team1' | 'team2';
-  }
+  team1: number | null;
+  team2: number | null;
+  winner?: 'team1' | 'team2';
+}
+
   
-export type Guess = {
-  match_id: string;
-  homeTeam: string;
-  awayTeam: string;
-  userPrediction: {
-    team1: number;
-    team2: number;
-  };
-};
 
 export interface KnockoutMatch {
     id: string;
@@ -49,5 +41,15 @@ export interface KnockoutMatch {
 export interface Prediction {
   match_id: string;
   round: string;
+  userPrediction: UserPrediction;
+}
+
+
+export interface Guess {
+  match_id: string;
+  homeTeam: string;
+  awayTeam: string;
+  date: string;
+  group: string;
   userPrediction: UserPrediction;
 }

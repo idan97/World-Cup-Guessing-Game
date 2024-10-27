@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Clock, Trophy, MessageCircle } from 'lucide-react';
+import axios from 'axios';
 
 interface TopPlayer {
   rank: number;
@@ -26,7 +27,7 @@ interface Match {
 
 interface Summary {
   date: string;
-  text: string;
+  content: string;
 }
 
 const topPlayers: TopPlayer[] = [
@@ -41,16 +42,12 @@ const exampleMatches: Match[] = [
   { id: 3, team1: 'Brazil', team2: 'Germany', date: '2026-06-13' },
 ];
 
-const summaries: Summary[] = [
-  { date: '2026-06-15', text: "Today marks a historic moment as the 2026 FIFA World Cup kicks off with a spectacular opening ceremony in Mexico City. The host nation, Mexico, will face Canada in the inaugural match at the iconic Azteca Stadium." },
-  { date: '2026-06-14', text: "On the eve of the World Cup, teams are making their final preparations. Training sessions are in full swing as coaches fine-tune their strategies." },
-  { date: '2026-06-13', text: "Two days before the World Cup begins, and the excitement is reaching fever pitch. Today saw a flurry of activities across the host nations." },
-];
+const API_URL = 'http://127.0.0.1:8000';
 
 export default function Dashboard() {
   const [timeLeft, setTimeLeft] = useState('');
-  const [summary, setSummary] = useState(summaries[0]);
-  const [selectedDate, setSelectedDate] = useState(summaries[0].date);
+  const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [selectedSummary, setSelectedSummary] = useState<Summary | null>(null);
   const [currentUser, setCurrentUser] = useState({ name: 'John Doe', rank: 7 });
   const [comment, setComment] = useState('');
   const [receiveEmails, setReceiveEmails] = useState(true);
@@ -72,12 +69,24 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleDateChange = (date: string) => {
-    setSelectedDate(date);
-    const newSummary = summaries.find(s => s.date === date);
-    if (newSummary) {
-      setSummary(newSummary);
+  useEffect(() => {
+    fetchSummaries();
+  }, []);
+
+  const fetchSummaries = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/manager/all-summaries`);
+      const summariesData = response.data.summaries || [];
+      setSummaries(summariesData);
+      setSelectedSummary(summariesData[0] || null); // Default to first summary
+    } catch (error) {
+      console.error('Error fetching summaries:', error);
     }
+  };
+
+  const handleDateChange = (date: string) => {
+    const summary = summaries.find((s) => s.date === date) || null;
+    setSelectedSummary(summary);
   };
 
   const handleCommentSubmit = () => {
@@ -127,7 +136,7 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="text-xl flex justify-between items-center">
               Top Players
-              <Button asChild variant="outline">
+              <Button asChild>
                 <Link href="/leaderboard">View Full Leaderboard</Link>
               </Button>
             </CardTitle>
@@ -156,76 +165,21 @@ export default function Dashboard() {
 
         <Card className="mb-8 bg-white rounded-lg shadow-lg p-6">
           <CardHeader>
-            <CardTitle>Your Predictions</CardTitle>
+            <CardTitle>Daily Summaries</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Match</TableHead>
-                  <TableHead>Your Prediction</TableHead>
-                  <TableHead>Actual Score</TableHead>
-                  <TableHead>Points</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {exampleMatches.map(match => (
-                  <TableRow key={match.id}>
-                    <TableCell>{match.team1} vs {match.team2}</TableCell>
-                    <TableCell>
-                      {match.userPrediction 
-                        ? `${match.userPrediction.team1} - ${match.userPrediction.team2}`
-                        : 'Not predicted'}
-                    </TableCell>
-                    <TableCell>
-                      {match.actualScore 
-                        ? `${match.actualScore.team1} - ${match.actualScore.team2}`
-                        : 'Not played yet'}
-                    </TableCell>
-                    <TableCell>
-                      {match.actualScore && match.userPrediction
-                        ? (match.actualScore.team1 === match.userPrediction.team1 && 
-                           match.actualScore.team2 === match.userPrediction.team2) ? 3 : 0
-                        : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="mt-4">
-              <Button asChild>
-                <Link href="/predictions">See All Predictions</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-8 bg-white rounded-lg shadow-lg p-6">
-          <CardHeader>
-            <CardTitle>Summary of the Day</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Select onValueChange={handleDateChange} defaultValue={selectedDate}>
+            <Select onValueChange={handleDateChange} defaultValue={selectedSummary?.date}>
               <SelectTrigger>
                 <SelectValue placeholder="Select date" />
               </SelectTrigger>
               <SelectContent>
-                {summaries.map(s => (
-                  <SelectItem key={s.date} value={s.date}>{s.date}</SelectItem>
+                {summaries.map((summary) => (
+                  <SelectItem key={summary.date} value={summary.date}>{summary.date}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <p className="mt-4">{summary.text}</p>
-            <div className="mt-4">
-              <Textarea
-                placeholder="Leave a comment..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-              />
-              <Button onClick={handleCommentSubmit} className="mt-2">
-                <MessageCircle className="mr-2 h-4 w-4" />
-                Submit Comment
-              </Button>
+            <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-sm">
+              <p className="text-lg font-medium text-gray-800">{selectedSummary?.content || "No summary available for this date."}</p>
             </div>
           </CardContent>
         </Card>
@@ -244,7 +198,7 @@ export default function Dashboard() {
               />
             </div>
             <div className="mt-4">
-              <Button asChild variant="outline">
+              <Button asChild>
                 <Link href="https://chat.whatsapp.com/your-group-link" target="_blank" rel="noopener noreferrer">
                   Join WhatsApp Group
                 </Link>
@@ -257,7 +211,7 @@ export default function Dashboard() {
           <Button asChild className="mr-4">
             <Link href="/predictions">Make Predictions</Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild className="outline-button">
             <Link href="/rules">View Rules</Link>
           </Button>
         </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, Home, TrendingUp, Trophy, Edit, ClipboardList } from 'lucide-react';
+import { LogOut, Menu, Home, TrendingUp, Trophy, Edit, ClipboardList, Users } from 'lucide-react';
 
 interface NavBarProps {
   username: string | null;
@@ -59,6 +59,9 @@ export default function NavBar({ username }: NavBarProps) {
                 <Link href="/manager/write-summary" className="text-gray-700 hover:text-gray-900 flex items-center">
                   <ClipboardList className="mr-1 h-4 w-4" /> Write Summary
                 </Link>
+                <Link href="/manager/user-management" className="text-gray-700 hover:text-gray-900 flex items-center">
+                  <Users className="mr-1 h-4 w-4" /> User Management
+                </Link>
               </>
             )}
             <Button onClick={handleLogout} variant="outline" className="text-gray-700 border-gray-300 hover:bg-gray-200 hover:text-gray-900">
@@ -93,6 +96,9 @@ export default function NavBar({ username }: NavBarProps) {
                 </Link>
                 <Link href="/manager/write-summary" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-200 hover:text-gray-900">
                   <ClipboardList className="inline-block mr-2 h-4 w-4" /> Write Summary
+                </Link>
+                <Link href="/manager/user-management" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-200 hover:text-gray-900">
+                  <Users className="inline-block mr-2 h-4 w-4" /> User Management
                 </Link>
               </>
             )}
