@@ -132,7 +132,7 @@ const PredictionsPage = () => {
   const [matchSortCriteria, setMatchSortCriteria] = useState<'date' | 'group'>('date');
   const [loadingGuesses, setLoadingGuesses] = useState<boolean>(true);
   const [errorGuesses, setErrorGuesses] = useState<string | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
 
   // State for Top Goal Scorer
   const [selectedTopGoalScorer, setSelectedTopGoalScorer] = useState<Player | null>(null);

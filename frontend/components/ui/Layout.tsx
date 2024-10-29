@@ -1,3 +1,4 @@
+// components/ui/Layout.tsx
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import NavBar from './NavBar';

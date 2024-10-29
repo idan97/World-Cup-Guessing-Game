@@ -1,9 +1,11 @@
 //types/index.ts
+// Example: types/index.ts
 export interface UserPrediction {
-  team1: number | null;
-  team2: number | null;
-  winner?: 'team1' | 'team2';
+  team1: number;
+  team2: number;
+  winner?: 'team1' | 'team2' | null;
 }
+
 
   
 

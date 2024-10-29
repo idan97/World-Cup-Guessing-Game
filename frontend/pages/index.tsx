@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 import axios from 'axios';
 import { User, Lock, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Head from 'next/head';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -51,6 +52,11 @@ export default function LoginPage() {
   };
 
   return (
+    <>
+    <Head>
+        <title>Login - World Cup 2026</title> {/* Set the page title */}
+
+      </Head>
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md bg-white shadow-lg">
         <CardHeader className="space-y-1">
@@ -131,5 +137,6 @@ export default function LoginPage() {
         </CardFooter>
       </Card>
     </div>
+    </>
   );
 }

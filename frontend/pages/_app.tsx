@@ -1,29 +1,40 @@
+// pages/_app.tsx
 import { useState, useEffect } from 'react';
 import type { AppProps } from 'next/app';
+import Head from 'next/head';
 import Layout from '@/components/ui/Layout';
 import '@/styles/globals.css';
 
-function MyApp({ Component, pageProps }: AppProps) {
-  const [username, setUsername] = useState<string | null>(null);
+type PageWithCustomTitle = {
+  title?: string;
+};
 
-  useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
-    setUsername(storedUsername);
+type CustomAppProps = AppProps & {
+  Component: AppProps['Component'] & PageWithCustomTitle;
+};
 
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'username') {
-        setUsername(event.newValue);
-      }
-    };
+function MyApp({ Component, pageProps, router }: CustomAppProps) {
+  // Removed username state and useEffect
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  // Derive title from page component or route path
+  const pageTitle = Component.title
+    ? `${Component.title} - World Cup 2026`
+    : `${router.pathname
+        .split('/')
+        .pop()
+        ?.replace(/-/g, ' ')
+        .replace(/(^\w|\s\w)/g, (match) => match.toUpperCase())} - World Cup 2026`;
 
   return (
-    <Layout username={username}>
-      <Component {...pageProps} />
-    </Layout>
+    <>
+      <Head>
+        <link rel="icon" href="/favicon.png" />
+        <title>{pageTitle}</title>
+      </Head>
+      <Layout>
+        <Component {...pageProps} />
+      </Layout>
+    </>
   );
 }
 
